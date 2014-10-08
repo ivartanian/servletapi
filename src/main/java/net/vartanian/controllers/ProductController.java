@@ -6,6 +6,7 @@ import main.java.net.vartanian.entity.Product;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,6 +21,8 @@ public class ProductController extends HttpServlet {
     public static final String PAGE_OK = "product.jsp";
     public static final String PAGE_ERROR = "error.jsp";
 
+    public static final String COOKIE_NAME = "counter";
+
     private MapProductDaoImpl productDao = new MapProductDaoImpl(new MapDataStoreImpl());
 
     @Override
@@ -30,6 +33,26 @@ public class ProductController extends HttpServlet {
         Product product = productDao.searchById(idStr);
         if (product != null) {
             request.setAttribute("product", product);
+
+            Cookie[] cookies = request.getCookies();
+            if (cookies == null) {
+                cookies = new Cookie[0];
+            }
+            Cookie fromClient = null;
+            for (Cookie cookie : cookies) {
+                if (COOKIE_NAME.equals(cookie.getName())) {
+                    fromClient = cookie;
+                }
+            }
+            if (fromClient == null) {
+                fromClient = new Cookie(COOKIE_NAME, "1");
+            }else {
+                int i = Integer.parseInt(fromClient.getValue());
+                fromClient.setValue(String.valueOf(++i));
+            }
+            response.addCookie(fromClient);
+            request.setAttribute("counter", fromClient.getValue());
+
             RequestDispatcher requestDispatcher = request.getRequestDispatcher(PAGE_OK);
             requestDispatcher.forward(request, response);
             return;
